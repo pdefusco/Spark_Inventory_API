@@ -18,7 +18,7 @@ For example:
 
 ```% python example.py```
 
-"""
+~~~
 Spark App ID:  application_1752523212569_0121
 
 Spark Attempt ID:  0
@@ -176,4 +176,4 @@ spark.yarn.isPython: true
 spark.yarn.jars: local:/opt/cloudera/parcels/CDH-7.3.1-1.cdh7.3.1.p400.67986116/lib/spark3/jars/*,local:/opt/cloudera/parcels/CDH-7.3.1-1.cdh7.3.1.p400.67986116/lib/spark3/hive/*
 spark.yarn.submit.waitAppCompletion: false
 spark.yarn.tags: livy-batch-0-rpr4xnyk
-"""
+~~~
