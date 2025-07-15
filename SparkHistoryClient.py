@@ -41,7 +41,7 @@ import requests
 from typing import Any, Dict, List, Optional
 
 class SparkHistoryClient:
-    def __init__(self, base_url: str, timeout: float = 10.0, cdp_token: str):
+    def __init__(self, base_url: str, cdp_token: str, timeout: float = 10.0):
         """
         :param base_url: e.g. https://spark-cluster-arm-gateway.pdf-jul2.a465-9q4k.cloudera.site/spark-cluster-arm/cdp-proxy/spark3history
         :param timeout: HTTP timeout in seconds
@@ -61,8 +61,6 @@ class SparkHistoryClient:
             'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7',
             'Accept-Language': 'en-US,en;q=0.9',
         }
-
-        response = requests.get(', headers=headers, cookies=cookies)
 
         url = f"{self.base_url}/api/v1{path}"
         resp = requests.get(url, params=params, timeout=self.timeout, headers=headers, cookies=cookies)
