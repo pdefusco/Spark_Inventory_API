@@ -42,7 +42,7 @@ from SparkHistoryClient import SparkHistoryClient
 base_url = "https://spark-cluster-arm-gateway.pdf-jul2.a465-9q4k.cloudera.site/spark-cluster-arm/cdp-proxy/spark3history" # Obtain from DataHub Endpoints UI
 token = "" # Obtain from Knox Token Management UI
 
-client = SparkHistoryClient(base_url, token, 15000)
+client = SparkHistoryClient(base_url, token, 15)
 
 apps = client.list_applications(status="completed", limit=100)
 
@@ -54,8 +54,10 @@ if apps:
 
     for app in apps:
         appId = app['id']
+        print("\nSpark App ID: ", appId)
 
         for attId in range(len(app['attempts'])):
+            print("\nSpark Attempt ID: ", attId)
             env_info = client.get_environment(appId, attId+1)
             spark_props = env_info.get("sparkProperties", [])
 
