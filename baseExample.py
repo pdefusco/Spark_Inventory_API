@@ -41,7 +41,7 @@ from SparkHistoryClient import SparkHistoryClient
 
 # Set Environment variables
 base_url = "https://ares-base-es01.ares.olympus.cloudera.com:8443/gateway/cdp-proxy/spark3history/" # Obtain from DataHub Endpoints UI
-token = os.environ["CDP_TOKEN"]
+token = os.environ["KNOX_TOKEN"]
 
 # Create Client
 client = SparkHistoryClient(base_url, token, 15)
