@@ -58,3 +58,6 @@ metadataDf = client.buildMetadataDf(allAppsMetadata)
 
 # Show Pandas DF
 metadataDf
+
+# Create Excel File
+metadataDf.to_excel("/home/cdsw/spark_app_summary.xlsx", index=False)
