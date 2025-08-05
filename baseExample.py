@@ -37,6 +37,7 @@
 # #  Author(s): Paul de Fusco
 #***************************************************************************/
 
+import os
 from SparkHistoryClient import SparkHistoryClient
 
 # Set Environment variables
