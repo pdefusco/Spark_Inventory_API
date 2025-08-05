@@ -38,6 +38,7 @@
 #***************************************************************************/
 
 import requests
+import pandas as pd
 from typing import Any, Dict, List, Optional
 
 class SparkHistoryClient:
@@ -105,6 +106,12 @@ class SparkHistoryClient:
         """
         return self._get(f"/applications/{app_id}/{attemptId}/environment")
 
+    def get_environment_base(self, app_id: str) -> Dict:
+        """
+        Retrieves Spark submit environment info, including Spark submit options.
+        """
+        return self._get(f"/applications/{app_id}/environment")
+
     def get_logs(self, app_id: str, attempt_id: Optional[int] = None) -> Any:
         suffix = f"/{attempt_id}" if attempt_id else ""
         return self._get(f'/applications/{app_id}{suffix}/logs')
@@ -114,3 +121,67 @@ class SparkHistoryClient:
 
     def get_task_list(self, app_id: str, stage_id: int, attempt_id: int) -> List[Dict]:
         return self._get(f'/applications/{app_id}/stages/{stage_id}/{attempt_id}/taskList')
+
+    def getAllAppMetadata(self, apps):
+      """Method to scrape all metadata for all apps including ID, Spark Properties and Resource Profiles"""
+
+      allAppMetadata = {}
+
+      for app in apps:
+        appId = app['id']
+        env_info = self.get_environment_base(appId)
+        allAppMetadata[appId] = appId
+        appMetadata = {
+          "sparkProperties": env_info.get("sparkProperties"),
+          "resourceProfiles": env_info.get("resourceProfiles")
+        }
+
+        allAppMetadata[appId] = appMetadata
+
+      return allAppMetadata
+
+    def buildMetadataDf(self, allAppMetadata):
+      """Method to flatten and create a pandas df with all filtered metadata from all apps"""
+
+      # Build flat rows
+      flattened_rows = []
+
+      for app_id, content in allAppMetadata.items():
+          row = {'id': app_id}
+
+          # Flatten sparkProperties (list of [key, value])
+          for key, value in content.get('sparkProperties', []):
+              row[key] = value
+
+          # Flatten executorResources from resourceProfiles
+          resource_profiles = content.get('resourceProfiles', [])
+
+          for profile in resource_profiles:
+              executor_res = profile.get('executorResources', {})
+              for res_key, res_val in executor_res.items():
+                  if isinstance(res_val, dict) and 'resourceName' in res_val and 'amount' in res_val:
+                      # Use the resourceName as the column name
+                      col_name = res_val['resourceName']
+                      amount = res_val['amount']
+                      # Avoid overwriting if duplicate; can add a suffix or aggregate if needed
+                      if col_name not in row:
+                          row[col_name] = amount
+                      else:
+                          # Example: sum numeric, or just list if not
+                          if isinstance(amount, (int, float)) and isinstance(row[col_name], (int, float)):
+                              row[col_name] += amount
+                          else:
+                              row[col_name] = [row[col_name], amount]
+                  else:
+                      # Handle if it's a direct value
+                      row[res_key] = res_val
+
+          flattened_rows.append(row)
+
+      # Create DataFrame
+      df = pd.DataFrame(flattened_rows)
+
+      df = df.drop("id", axis=1)
+
+      # Return result
+      return df
