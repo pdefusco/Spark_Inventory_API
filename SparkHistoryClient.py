@@ -147,34 +147,35 @@ class SparkHistoryClient:
       flattened_rows = []
 
       for app_id, content in allAppMetadata.items():
-          row = {'id': app_id}
+        row = {'app_id': app_id}
 
-          # Flatten sparkProperties (list of [key, value])
-          for key, value in content.get('sparkProperties', []):
-              row[key] = value
+        # Flatten sparkProperties (key-value pairs)
+        for key, value in content.get('sparkProperties', []):
+            row[key] = value
 
-          # Flatten executorResources from resourceProfiles
-          resource_profiles = content.get('resourceProfiles', [])
+        # Process each resource profile
+        for profile in content.get('resourceProfiles', []):
+            for section, resources in profile.items():
+                if isinstance(resources, dict):
+                    for res_key, res_val in resources.items():
+                        if isinstance(res_val, dict):
+                            resource_name = res_val.get('resourceName')
+                            amount = res_val.get('amount')
+                            if resource_name is not None and amount is not None:
+                                # Build column name based on the section (e.g. executor_memory)
+                                col_name = f"{section.rstrip('Resources')}_{resource_name}"
 
-          for profile in resource_profiles:
-              executor_res = profile.get('executorResources', {})
-              for res_key, res_val in executor_res.items():
-                  if isinstance(res_val, dict) and 'resourceName' in res_val and 'amount' in res_val:
-                      # Use the resourceName as the column name
-                      col_name = res_val['resourceName']
-                      amount = res_val['amount']
-                      # Avoid overwriting if duplicate; can add a suffix or aggregate if needed
-                      if col_name not in row:
-                          row[col_name] = amount
-                      else:
-                          # Example: sum numeric, or just list if not
-                          if isinstance(amount, (int, float)) and isinstance(row[col_name], (int, float)):
-                              row[col_name] += amount
-                          else:
-                              row[col_name] = [row[col_name], amount]
-                  else:
-                      # Handle if it's a direct value
-                      row[res_key] = res_val
+                                if col_name not in row:
+                                    row[col_name] = amount
+                                else:
+                                    # Handle multiple values
+                                    existing = row[col_name]
+                                    try:
+                                        row[col_name] = float(existing) + float(amount)
+                                    except (ValueError, TypeError):
+                                        if not isinstance(existing, list):
+                                            row[col_name] = [existing]
+                                        row[col_name].append(amount)
 
           flattened_rows.append(row)
 
